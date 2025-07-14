@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useTrainingStore } from 'src/stores/TrainingStore';
 const trainingStore = useTrainingStore();
 
-const adminMode = false;
+const adminMode = true;
 
 const completedMessages = computed(() => {
   if (trainingStore.reviewCount === 1) {

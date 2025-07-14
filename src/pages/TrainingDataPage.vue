@@ -203,17 +203,25 @@ const validSpec = computed(() => {
   }
 });
 
+
 watch(
   (): [TrainingData | null, boolean] => [currentExample.value, validSpec.value], 
   ([example, valid]: [TrainingData | null, boolean]) => { 
     if (example && valid) {
       nextTick(() => {
-        const container = document.getElementById('gosling-container');
-        console.log('Gosling container:', container);
-        if (container) {
-          embed(container, spec.value);
-        } else {
-          console.error('Gosling container not found');
+        const wrapper = document.getElementById('gosling-wrapper');
+        console.log('Gosling wrapper:', wrapper);
+        if (wrapper) {
+          const existingContainer = document.getElementById('gosling-container');
+          if (existingContainer) {
+            existingContainer.remove();
+          }
+
+          const newContainer = document.createElement('div');
+          newContainer.id = 'gosling-container';
+          wrapper.appendChild(newContainer);
+
+          embed(newContainer, spec.value);
         }
       });
     }
@@ -343,8 +351,25 @@ const sharedReviews: {
   paraphrased: number;
 }[] = [
   { template: 0, expanded: 0, paraphrased: 0},
-  { template: 0, expanded: 0, paraphrased: 1},
-  { template: 0, expanded: 1, paraphrased: 0},
+  { template: 1, expanded: 0, paraphrased: 6},
+  { template: 2, expanded: 3, paraphrased: 1},
+  { template: 3, expanded: 21, paraphrased: 3},
+  { template: 4, expanded: 2, paraphrased: 2},
+  { template: 4, expanded: 4, paraphrased: 4},
+  { template: 5, expanded: 12, paraphrased: 4},
+  { template: 6, expanded: 14, paraphrased: 1 },
+  { template: 8, expanded: 20, paraphrased: 1},
+  { template: 10, expanded: 26, paraphrased: 0 },
+  { template: 11, expanded: 2, paraphrased: 9},
+  { template: 13, expanded: 8, paraphrased: 6},
+  { template: 15, expanded: 13, paraphrased: 0 },
+  { template: 19, expanded: 0, paraphrased: 2},
+  { template: 22, expanded: 20, paraphrased: 5},
+  { template: 24, expanded: 12, paraphrased: 0 },
+  { template: 25, expanded: 21, paraphrased: 0 },
+  { template: 27, expanded: 23, paraphrased: 29},
+  { template: 32, expanded: 504, paraphrased: 4},
+  { template: 38, expanded: 64, paraphrased: 1},
   
 ];
 
@@ -637,104 +662,108 @@ const lookupModel = ref<number>(0);
           <p class="text-h5">
             {{ currentExample.query_base }}
           </p>
-          <div id = "gosling-container" class="gosling-container q-my-md"></div>
+          <div id = "gosling-wrapper" class="gosling-container q-my-md">
+            <div id = "gosling-container"></div>
+          </div>
 
         </template>
         <template v-else>
           
         </template>
       </div>
-      <q-card flat class="q-mb-md mw-585" v-if="currentExample">
-        <q-card-section class="row">
-          <q-btn
-            no-caps
-            size="xl"
-            color="positive"
-            label="Looks Good!"
-            :outline="feedbackStatus !== 'good'"
-            :ripple="{ color: 'green' }"
-            class="chonk-button"
-            @click="setFeedbackStatus('good')"
-          ></q-btn>
-          <q-space></q-space>
-          <q-btn
-            no-caps
-            size="xl"
-            color="warning"
-            label="Could Be Better"
-            :outline="feedbackStatus !== 'improve'"
-            :ripple="{ color: 'orange' }"
-            class="chonk-button"
-            @click="setFeedbackStatus('improve')"
-          ></q-btn>
-          <q-space></q-space>
-          <q-btn
-            no-caps
-            size="xl"
-            color="negative"
-            :ripple="{ color: 'red' }"
-            class="chonk-button"
-            label="Something's Wrong"
-            :outline="feedbackStatus !== 'bad'"
-            @click="setFeedbackStatus('bad')"
-          ></q-btn>
-        </q-card-section>
-        <template v-if="feedbackStatus === 'improve'">
-          <q-card-section>
-            Please provide a short description of how the visualization could be
-            improved.
+      <div class="feedback-section">
+        <q-card flat class="q-mb-md mw-585" v-if="currentExample">
+          <q-card-section class="row">
+            <q-btn
+              no-caps
+              size="xl"
+              color="positive"
+              label="Looks Good!"
+              :outline="feedbackStatus !== 'good'"
+              :ripple="{ color: 'green' }"
+              class="chonk-button"
+              @click="setFeedbackStatus('good')"
+            ></q-btn>
+            <q-space></q-space>
+            <q-btn
+              no-caps
+              size="xl"
+              color="warning"
+              label="Could Be Better"
+              :outline="feedbackStatus !== 'improve'"
+              :ripple="{ color: 'orange' }"
+              class="chonk-button"
+              @click="setFeedbackStatus('improve')"
+            ></q-btn>
+            <q-space></q-space>
+            <q-btn
+              no-caps
+              size="xl"
+              color="negative"
+              :ripple="{ color: 'red' }"
+              class="chonk-button"
+              label="Something's Wrong"
+              :outline="feedbackStatus !== 'bad'"
+              @click="setFeedbackStatus('bad')"
+            ></q-btn>
           </q-card-section>
-          <q-card-section>
-            <q-input
-              v-model="reviewerComment"
-              autogrow
-              filled
-              label="Comments"
-            ></q-input>
-          </q-card-section>
-        </template>
-        <template v-if="feedbackStatus === 'bad'">
-          <q-list>
-            <q-item
-              v-for="issue in possibleFeedbackCategories"
-              :key="issue.name"
-              tag="label"
-              v-ripple
-            >
-              <q-item-section side top>
-                <q-checkbox v-model="issue.present" />
-              </q-item-section>
+          <template v-if="feedbackStatus === 'improve'">
+            <q-card-section>
+              Please provide a short description of how the visualization could be
+              improved.
+            </q-card-section>
+            <q-card-section>
+              <q-input
+                v-model="reviewerComment"
+                autogrow
+                filled
+                label="Comments"
+              ></q-input>
+            </q-card-section>
+          </template>
+          <template v-if="feedbackStatus === 'bad'">
+            <q-list>
+              <q-item
+                v-for="issue in possibleFeedbackCategories"
+                :key="issue.name"
+                tag="label"
+                v-ripple
+              >
+                <q-item-section side top>
+                  <q-checkbox v-model="issue.present" />
+                </q-item-section>
 
-              <q-item-section>
-                <q-item-label>{{ issue.name }}</q-item-label>
-                <q-item-label caption>
-                  {{ issue.description }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
+                <q-item-section>
+                  <q-item-label>{{ issue.name }}</q-item-label>
+                  <q-item-label caption>
+                    {{ issue.description }}
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <q-card-section>
+              <q-input
+                v-model="reviewerComment"
+                autogrow
+                filled
+                label="Comments"
+              ></q-input>
+            </q-card-section>
+          </template>
           <q-card-section>
-            <q-input
-              v-model="reviewerComment"
-              autogrow
-              filled
-              label="Comments"
-            ></q-input>
+            <q-btn
+              no-caps
+              size="lg"
+              class="full-width"
+              color="primary"
+              style="height: 90px"
+              label="Submit and Get New Question"
+              :disable="feedbackStatus === null"
+              @click="submitFeedback"
+            ></q-btn>
           </q-card-section>
-        </template>
-        <q-card-section>
-          <q-btn
-            no-caps
-            size="lg"
-            class="full-width"
-            color="primary"
-            style="height: 90px"
-            label="Submit and Get New Question"
-            :disable="feedbackStatus === null"
-            @click="submitFeedback"
-          ></q-btn>
-        </q-card-section>
-      </q-card>
+        </q-card>
+      </div>
     </div>
   </q-page>
 </template>
@@ -759,5 +788,28 @@ const lookupModel = ref<number>(0);
 
 .flex-grow {
   flex-grow: 1;
+}
+
+.parent-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.gosling-container {
+  flex-grow: 1;
+  width: 100%;
+  max-width: 800px;
+  margin: 10px auto 50px;
+}
+
+.query-section {
+  margin-bottom: 1rem;
+}
+
+.feedback-section {
+  margin-top: 1rem;
 }
 </style>
